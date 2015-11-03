@@ -1,5 +1,9 @@
 module MutateIt
 
+@windows? (const thelib = "mutateit") : (const thelib = "libmutateit")  # Name of the shared lib.
+
+export mutateit
+
 function mutateit(t_type, member::ASCIIString, val)
 	# Mutate the member 'member' of an immutable type whose pointer is T_TYPE
 	# VAL is the new value of the MEMBER field.
@@ -19,8 +23,13 @@ function mutateit(t_type, member::ASCIIString, val)
 	# This would work too
 	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
 	p_val = pointer([val])
-	blind_change_struct(p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
+	blind_change_struct(p_type, p_val, @sprintf("%s", ft[ind]), fo[ind])
 	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
+end
+
+function blind_change_struct(X, what, keyword::ASCIIString, off::Integer)
+	ccall((:blind_change_struct, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{UInt8}, Csize_t),
+	       X, what, keyword, off)
 end
 
 end # module
